@@ -29,5 +29,5 @@ RUN uv venv /opt/venv && \
 ENV HOST 0.0.0.0
 EXPOSE $PORT
 
-# Run ADK API Server
-CMD ["./run.sh"]
+# Run simple standalone orchestrator
+CMD python3 main.py

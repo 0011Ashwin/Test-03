@@ -69,6 +69,7 @@ gcloud run deploy accountant \
   --region $REGION \
   --allow-unauthenticated \
   --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars DB_HOST="10.221.0.2",DB_PASS="SuperSecretPassword123" \
   --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
 ACCOUNTANT_URL=$(gcloud run services describe accountant --region $REGION --format='value(status.url)')
