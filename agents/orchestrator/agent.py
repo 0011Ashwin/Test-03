@@ -7,7 +7,7 @@ from google.adk.events import Event, EventActions
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.agents.callback_context import CallbackContext
 
-from authenticated_httpx import create_authenticated_client
+from a2a_utils import create_authenticated_client
 
 # --- Callbacks ---
 def create_save_output_callback(key: str):
