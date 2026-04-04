@@ -29,5 +29,6 @@ RUN uv venv /opt/venv && \
 ENV HOST 0.0.0.0
 EXPOSE $PORT
 
-# Run ADK API Server
-CMD ["python3", "adk_app.py", "--host", "0.0.0.0", "--trace_to_cloud", "--a2a"]
+# Run ADK API Server (Use the PORT provided by Cloud Run)
+CMD python3 adk_app.py --host 0.0.0.0 --port ${PORT:-8080} --trace_to_cloud --a2a
+
