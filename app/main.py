@@ -1,40 +1,33 @@
+"""
+Travel Concierge Frontend Server
+GenAI Academy · ACAP Edition · H2skill
+"""
+import json
 import logging
 import os
-import json
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import httpx
-from httpx_sse import aconnect_sse
-
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from google.genai import types as genai_types
-from opentelemetry import trace
-from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-from opentelemetry.sdk.trace import TracerProvider, export
 from pydantic import BaseModel
-
-from authenticated_httpx import create_authenticated_client
-
-class Feedback(BaseModel):
-    score: float
-    text: str | None = None
-    run_id: str | None = None
-    user_id: str | None = None
+import uvicorn
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-provider = TracerProvider()
-processor = export.BatchSpanProcessor(
-    CloudTraceSpanExporter(),
-)
-provider.add_span_processor(processor)
-trace.set_tracer_provider(provider)
+# ── Config ──────────────────────────────────────────────────────────────────
 
-app = FastAPI()
+agent_server_url = os.getenv("AGENT_SERVER_URL", "").rstrip("/")
+if not agent_server_url:
+    raise ValueError("AGENT_SERVER_URL environment variable must be set")
+
+# ── App ──────────────────────────────────────────────────────────────────────
+
+app = FastAPI(title="Travel Concierge — GenAI Academy ACAP")
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,167 +37,152 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-agent_name = os.getenv("AGENT_NAME", None)
-agent_server_url = os.getenv("AGENT_SERVER_URL")
-if not agent_server_url:
-    raise ValueError("AGENT_SERVER_URL environment variable not set")
-else:
-    agent_server_url = agent_server_url.rstrip("/")
+# Shared async HTTP client (no auth needed — services are allow-unauthenticated)
+_client: Optional[httpx.AsyncClient] = None
 
-clients: Dict[str, httpx.AsyncClient] = {}
+async def get_client() -> httpx.AsyncClient:
+    global _client
+    if _client is None or _client.is_closed:
+        _client = httpx.AsyncClient(timeout=180.0)
+    return _client
 
-async def get_client(agent_server_origin: str) -> httpx.AsyncClient:
-    global clients
-    if agent_server_origin not in clients:
-        clients[agent_server_origin] = create_authenticated_client(agent_server_origin)
-    return clients[agent_server_origin]
+# ── ADK helpers ──────────────────────────────────────────────────────────────
 
-async def create_session(agent_server_origin: str, agent_name: str, user_id: str) -> Dict[str, Any]:
-    httpx_client = await get_client(agent_server_origin)
-    headers=[
-        ("Content-Type", "application/json")
-    ]
-    session_request_url = f"{agent_server_origin}/apps/{agent_name}/users/{user_id}/sessions"
-    session_response = await httpx_client.post(
-        session_request_url,
-        headers=headers
+agent_name_cache: Optional[str] = None
+
+async def discover_agent_name() -> str:
+    global agent_name_cache
+    if agent_name_cache:
+        return agent_name_cache
+    client = await get_client()
+    try:
+        resp = await client.get(f"{agent_server_url}/list-apps")
+        resp.raise_for_status()
+        names = resp.json()
+        agent_name_cache = names[0] if names else "agent"
+    except Exception:
+        agent_name_cache = "agent"
+    return agent_name_cache
+
+
+async def create_session(agent: str, user_id: str) -> Dict[str, Any]:
+    client = await get_client()
+    resp = await client.post(
+        f"{agent_server_url}/apps/{agent}/users/{user_id}/sessions",
+        json={},
     )
-    session_response.raise_for_status()
-    return session_response.json()
+    resp.raise_for_status()
+    return resp.json()
 
-async def get_session(agent_server_origin: str, agent_name: str, user_id: str, session_id: str) -> Optional[Dict[str, Any]]:
-    httpx_client = await get_client(agent_server_origin)
-    headers=[
-        ("Content-Type", "application/json")
-    ]
-    session_request_url = f"{agent_server_origin}/apps/{agent_name}/users/{user_id}/sessions/{session_id}"
-    session_response = await httpx_client.get(
-        session_request_url,
-        headers=headers
+
+async def get_session(agent: str, user_id: str, session_id: str) -> Optional[Dict[str, Any]]:
+    client = await get_client()
+    resp = await client.get(
+        f"{agent_server_url}/apps/{agent}/users/{user_id}/sessions/{session_id}"
     )
-    if session_response.status_code == 404:
+    if resp.status_code == 404:
         return None
-    session_response.raise_for_status()
-    return session_response.json()
+    resp.raise_for_status()
+    return resp.json()
 
 
-async def list_agents(agent_server_origin: str) -> List[str]:
-    httpx_client = await get_client(agent_server_origin)
-    headers=[
-        ("Content-Type", "application/json")
-    ]
-    list_url = f"{agent_server_origin}/list-apps"
-    list_response = await httpx_client.get(
-        list_url,
-        headers=headers
-    )
-    list_response.raise_for_status()
-    agent_list = list_response.json()
-    if not agent_list:
-        agent_list = ["agent"]
-    return agent_list
-
-
-async def query_adk_sever(
-        agent_server_origin: str, agent_name: str, user_id: str, message: str, session_id
+async def stream_agent(
+    agent: str, user_id: str, session_id: str, message: str
 ) -> AsyncGenerator[Dict[str, Any], None]:
-    httpx_client = await get_client(agent_server_origin)
-    request = {
-        "appName": agent_name,
+    client = await get_client()
+    payload = {
+        "appName": agent,
         "userId": user_id,
         "sessionId": session_id,
-        "newMessage": {
-            "role": "user",
-            "parts": [{"text": message}]
-        },
-        "streaming": False
+        "newMessage": {"role": "user", "parts": [{"text": message}]},
+        "streaming": False,
     }
-    async with aconnect_sse(
-        httpx_client,
-        "POST",
-        f"{agent_server_origin}/run_sse",
-        json=request
-    ) as event_source:
-        if event_source.response.is_error:
-            event = {
-                "author": agent_name,
-                "content":{
-                    "parts": [
-                        {
-                            "text": f"Error {event_source.response.text}"
-                        }
-                    ]
-                }
-            }
-            yield event
-        else:
-            async for server_event in event_source.aiter_sse():
-                event = server_event.json()
-                yield event
+    async with client.stream("POST", f"{agent_server_url}/run_sse", json=payload) as resp:
+        if resp.is_error:
+            yield {"author": agent, "content": {"parts": [{"text": f"Error: {resp.status_code}"}]}}
+            return
+        async for line in resp.aiter_lines():
+            if line.startswith("data:"):
+                raw = line[5:].strip()
+                if not raw or raw == "[DONE]":
+                    continue
+                try:
+                    yield json.loads(raw)
+                except json.JSONDecodeError:
+                    pass
 
-class SimpleChatRequest(BaseModel):
+# ── Chat endpoint ────────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
     message: str
-    user_id: str = "test_user"
+    user_id: str = "user"
     session_id: Optional[str] = None
 
+
 @app.post("/api/chat_stream")
-async def chat_stream(request: SimpleChatRequest):
-    """Streaming chat endpoint."""
-    global agent_name, agent_server_url
-    if not agent_name:
-        agent_name = (await list_agents(agent_server_url))[0] # type: ignore
+async def chat_stream(req: ChatRequest):
+    agent = await discover_agent_name()
 
+    # Resolve session
     session = None
-    if request.session_id:
-        session = await get_session(
-            agent_server_url, # type: ignore
-            agent_name,
-            request.user_id,
-            request.session_id
-        )
+    if req.session_id:
+        try:
+            session = await get_session(agent, req.user_id, req.session_id)
+        except Exception:
+            pass
+
     if session is None:
-        session = await create_session(
-            agent_server_url, # type: ignore
-            agent_name,
-            request.user_id
-        )
+        session = await create_session(agent, req.user_id)
 
-    events = query_adk_sever(
-        agent_server_url, # type: ignore
-        agent_name,
-        request.user_id,
-        request.message,
-        session["id"]
-    )
-
-    async def event_generator():
+    async def generate():
         final_text = ""
-        async for event in events:
-            # Send progress updates based on which agent is active
-            if event["author"] == "logistics":
-                 yield json.dumps({"type": "progress", "text": "🛎️ Logistics is processing travel intent..."}) + "\n"
-            elif event["author"] == "travel_researcher":
-                 yield json.dumps({"type": "progress", "text": "🔍 Travel Researcher is finding hotels..."}) + "\n"
-            elif event["author"] == "policy_auditor":
-                 yield json.dumps({"type": "progress", "text": "⚖️ Policy Auditor is checking budget constraints..."}) + "\n"
-            elif event["author"] == "accountant":
-                 yield json.dumps({"type": "progress", "text": "📝 Accountant is logging expenses to AlloyDB..."}) + "\n"
-            # Accumulate final text
-            if "content" in event and event["content"]:
-                content = genai_types.Content.model_validate(event["content"])
-                for part in content.parts: # type: ignore
-                    if part.text:
-                        final_text += part.text
-        # Send final result
+        try:
+            async for event in stream_agent(agent, req.user_id, session["id"], req.message):
+                author  = event.get("author", "")
+                content = event.get("content") or {}
+                parts   = content.get("parts", [])
+
+                # Send progress hint based on author
+                progress_map = {
+                    "logistics":         "🛎️ Logistics Agent is processing your travel request…",
+                    "travel_researcher": "🔍 Travel Researcher is finding hotel options…",
+                    "policy_auditor":    "⚖️ Policy Auditor is checking budget constraints…",
+                    "accountant":        "📝 Accountant is logging expenses to AlloyDB…",
+                }
+                if author in progress_map:
+                    yield json.dumps({"type": "progress", "text": progress_map[author]}) + "\n"
+
+                # Accumulate text
+                for part in parts:
+                    if part.get("text"):
+                        final_text += part["text"]
+
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            final_text = f"An error occurred: {str(e)}"
+
         yield json.dumps({"type": "result", "text": final_text.strip()}) + "\n"
 
-    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
+    return StreamingResponse(generate(), media_type="application/x-ndjson")
 
-# Mount frontend from the copied location
-frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
-if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
+# ── Health ───────────────────────────────────────────────────────────────────
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "agent_url": agent_server_url}
+
+
+# ── Static frontend ──────────────────────────────────────────────────────────
+
+frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+
+
+# ── Entry ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    port = int(os.environ.get("PORT", 8080))
+    logger.info(f"Starting Travel Concierge frontend on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

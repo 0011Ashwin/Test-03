@@ -3,55 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Course Creator - Build a Course in Minutes</title>
+    <title>AI Travel Concierge — GenAI Academy ACAP | H2skill</title>
+    <meta name="description" content="Multi-agent AI travel planner built on Google Cloud Run and Gemini. Part of GenAI Academy ACAP edition hosted by H2skill.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="landing-page">
-    <div class="container">
-        <header>
-            <div class="logo">🎓 AI Course Creator</div>
-        </header>
-        <main class="hero-section">
-            <h1>Turn any topic into a complete course.</h1>
-            <p class="subtitle">Just enter a subject, and our team of AI agents will research, fact-check, and write a comprehensive course for you in seconds.</p>
-            
-            <form id="create-form" class="hero-form">
-                <input type="text" id="topic-input" placeholder="What do you want to learn?" autocomplete="off" required>
-                <button type="submit" id="create-button">
-                    <span>Start Building</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                        <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </form>
+<body>
 
-            <div id="progress-container" class="progress-container hidden">
-                <div class="agent-status">
-                    <div class="status-icon">
-                        <div class="spinner"></div>
-                    </div>
-                    <div id="status-text" class="status-text">Initializing AI squad...</div>
+    <!-- ── Top bar ── -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <!-- Google-style coloured dots logo -->
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9"  cy="9"  r="7" fill="#4285F4"/>
+                <circle cx="23" cy="9"  r="7" fill="#EA4335"/>
+                <circle cx="9"  cy="23" r="7" fill="#34A853"/>
+                <circle cx="23" cy="23" r="7" fill="#FBBC04"/>
+            </svg>
+            <div class="topbar-brand">
+                <span class="brand-main">AI Travel Concierge</span>
+                <span class="brand-sub">GenAI Academy · ACAP Edition</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <span class="hosted-badge">Hosted by <strong>H2skill</strong></span>
+            <span class="powered-badge">Powered by <strong>Gemini</strong></span>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- ════ LANDING ════ -->
+        <section id="landing-section">
+
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-label">
+                    <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" width="18" height="18" alt="Gemini" onerror="this.style.display='none'">
+                    Multi-Agent System · Google Cloud Run
                 </div>
-                <div class="progress-steps">
-                    <div class="step" id="step-researcher">
-                        <div class="step-icon">🔍</div>
-                        <div class="step-label">Researching</div>
+                <h1>Your AI-powered<br>Travel Concierge</h1>
+                <p class="hero-desc">
+                    Describe your trip and five specialized AI agents instantly coordinate — parsing flights,
+                    finding hotels, checking budget policy, and logging expenses.
+                </p>
+
+                <!-- Input card -->
+                <div class="input-card">
+                    <form id="travel-form" autocomplete="off">
+                        <label class="input-label" for="travel-input">Tell me about your trip</label>
+                        <div class="input-row">
+                            <input
+                                type="text"
+                                id="travel-input"
+                                class="travel-input"
+                                placeholder="e.g. I have a flight to Bangalore on Monday for a 3-day conference…"
+                                required
+                            >
+                            <button type="submit" id="submit-btn" class="btn-primary">
+                                <span id="btn-label">Plan My Trip</span>
+                                <svg id="btn-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+                                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/>
+                                </svg>
+                                <svg id="btn-spinner" class="spinner hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="input-hint">Try: "Flight to Mumbai next Tuesday, 2 nights, budget $150/night hotel"</p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Agent pipeline diagram -->
+            <div class="pipeline-section">
+                <h2 class="section-title">How it works</h2>
+                <div class="pipeline">
+                    <div class="pipe-agent">
+                        <div class="pipe-icon" style="background:#E8F0FE; color:#4285F4;">🛎️</div>
+                        <div class="pipe-name">Logistics</div>
+                        <div class="pipe-desc">Parses flights & books calendar</div>
                     </div>
-                    <div class="step" id="step-judge">
-                        <div class="step-icon">⚖️</div>
-                        <div class="step-label">Fact-Checking</div>
+                    <div class="pipe-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
                     </div>
-                    <div class="step" id="step-builder">
-                        <div class="step-icon">✍️</div>
-                        <div class="step-label">Writing</div>
+                    <div class="pipe-agent">
+                        <div class="pipe-icon" style="background:#FCE8E6; color:#EA4335;">🔍</div>
+                        <div class="pipe-name">Researcher</div>
+                        <div class="pipe-desc">Finds & ranks hotel options</div>
+                    </div>
+                    <div class="pipe-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="pipe-agent">
+                        <div class="pipe-icon" style="background:#FEF7E0; color:#F29900;">⚖️</div>
+                        <div class="pipe-name">Auditor</div>
+                        <div class="pipe-desc">Checks budget policy</div>
+                    </div>
+                    <div class="pipe-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="pipe-agent">
+                        <div class="pipe-icon" style="background:#E6F4EA; color:#34A853;">📝</div>
+                        <div class="pipe-name">Accountant</div>
+                        <div class="pipe-desc">Logs expenses to AlloyDB</div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+
+        </section>
+
+        <!-- ════ PROCESSING ════ -->
+        <section id="processing-section" class="hidden">
+            <div class="processing-layout">
+
+                <!-- Left: Agent cards -->
+                <div class="agents-panel">
+                    <div class="panel-header">
+                        <h2>Agent Workflow</h2>
+                        <span class="live-pill" id="live-pill">
+                            <span class="live-dot"></span> Running
+                        </span>
+                    </div>
+
+                    <!-- Logistics -->
+                    <div class="agent-row" id="row-logistics">
+                        <div class="row-icon" style="background:#E8F0FE; color:#4285F4;">🛎️</div>
+                        <div class="row-body">
+                            <div class="row-title">Logistics Agent</div>
+                            <div class="row-detail">Parsing flights, blocking calendar</div>
+                            <div class="row-output hidden" id="out-logistics"></div>
+                        </div>
+                        <div class="row-chip" id="chip-logistics">Waiting</div>
+                    </div>
+                    <div class="row-connector"></div>
+
+                    <!-- Researcher -->
+                    <div class="agent-row" id="row-travel_researcher">
+                        <div class="row-icon" style="background:#FCE8E6; color:#EA4335;">🔍</div>
+                        <div class="row-body">
+                            <div class="row-title">Travel Researcher</div>
+                            <div class="row-detail">Finding hotels, comparing prices</div>
+                            <div class="row-output hidden" id="out-travel_researcher"></div>
+                        </div>
+                        <div class="row-chip" id="chip-travel_researcher">Waiting</div>
+                    </div>
+                    <div class="row-connector"></div>
+
+                    <!-- Auditor -->
+                    <div class="agent-row" id="row-policy_auditor">
+                        <div class="row-icon" style="background:#FEF7E0; color:#F29900;">⚖️</div>
+                        <div class="row-body">
+                            <div class="row-title">Policy Auditor</div>
+                            <div class="row-detail">Verifying budget constraints</div>
+                            <div class="row-output hidden" id="out-policy_auditor"></div>
+                        </div>
+                        <div class="row-chip" id="chip-policy_auditor">Waiting</div>
+                    </div>
+                    <div class="row-connector"></div>
+
+                    <!-- Accountant -->
+                    <div class="agent-row" id="row-accountant">
+                        <div class="row-icon" style="background:#E6F4EA; color:#34A853;">📝</div>
+                        <div class="row-body">
+                            <div class="row-title">Accountant</div>
+                            <div class="row-detail">Logging approved expenses to AlloyDB</div>
+                            <div class="row-output hidden" id="out-accountant"></div>
+                        </div>
+                        <div class="row-chip" id="chip-accountant">Waiting</div>
+                    </div>
+                </div>
+
+                <!-- Right: Result panel -->
+                <div class="result-panel">
+                    <div class="result-card" id="result-card">
+                        <div class="result-loading" id="result-loading">
+                            <div class="g-spinner"></div>
+                            <p class="loading-text" id="loading-text">Initializing agents…</p>
+                        </div>
+                        <div class="result-done hidden" id="result-done">
+                            <div class="result-done-header">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#34A853"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <h3>Travel Plan Ready</h3>
+                            </div>
+                            <div class="result-text" id="result-text"></div>
+                        </div>
+                    </div>
+
+                    <button id="new-trip-btn" class="btn-secondary hidden" onclick="resetApp()">
+                        ✈️ &nbsp;Plan Another Trip
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <span>GenAI Academy · ACAP Edition &nbsp;·&nbsp; Hosted by <strong>H2skill</strong> &nbsp;·&nbsp; Built on Google Cloud Run & Gemini</span>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>
