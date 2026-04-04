@@ -1,0 +1,77 @@
+# Setting up AlloyDB for the Accountant Agent
+
+To properly run the `accountant` agent with a real AlloyDB PostgreSQL databse, follow these steps using Google Cloud Console or gcloud CLI:
+
+## 1. Enable Required APIs
+
+```bash
+gcloud services enable \
+    alloydb.googleapis.com \
+    compute.googleapis.com \
+    servicenetworking.googleapis.com \
+    vpcaccess.googleapis.com
+```
+
+## 2. Setup VPC Network (Required for AlloyDB)
+
+AlloyDB instances must be deployed on a VPC network.
+Create a network and an allocated IP range:
+```bash
+gcloud compute networks create my-alloydb-vpc --subnet-mode=custom
+gcloud compute addresses create my-alloydb-ip-range \
+    --global \
+    --purpose=VPC_PEERING \
+    --prefix-length=16 \
+    --description="Peering range for AlloyDB" \
+    --network=my-alloydb-vpc
+
+gcloud services vpc-peerings connect \
+    --service=servicenetworking.googleapis.com \
+    --ranges=my-alloydb-ip-range \
+    --network=my-alloydb-vpc \
+    --project=$GOOGLE_CLOUD_PROJECT
+```
+
+## 3. Create the AlloyDB Cluster and Instance
+```bash
+# Create Cluster
+gcloud alloydb clusters create travel-cluster \
+    --password="SuperSecretPassword123" \
+    --network="projects/$GOOGLE_CLOUD_PROJECT/global/networks/my-alloydb-vpc" \
+    --region=us-central1
+
+# Create Primary Instance
+gcloud alloydb instances create travel-instance \
+    --cluster=travel-cluster \
+    --region=us-central1 \
+    --instance-type=PRIMARY \
+    --cpu-count=2
+
+# You'll need to grab the private IP to connect your Cloud Run service using a VPC connector.
+gcloud alloydb instances describe travel-instance \
+    --cluster=travel-cluster \
+    --region=us-central1 \
+    --format="value(ipAddress)"
+```
+
+## 4. Connect to Cloud Run (The Accountant Agent)
+
+For the `accountant` agent to securely access the private AlloyDB instance:
+1. Create a Serverless VPC Access connector for `my-alloydb-vpc`.
+2. Deploy the `accountant` service attached to that VPC connector.
+3. Pass the Database IP address as an environment variable (`DB_HOST`), along with `DB_USER` ("postgres"), `DB_PASS` ("SuperSecretPassword123"), and `DB_NAME` ("postgres").
+
+```bash
+# Example VPC Connector snippet (if deploying explicitly)
+gcloud compute networks vpc-access connectors create my-connector \
+    --network my-alloydb-vpc \
+    --region us-central1 \
+    --range 10.8.0.0/28
+
+# Re-deploy accountant with VPC details
+gcloud run deploy accountant \
+  --source agents/accountant/ \
+  ...
+  --vpc-connector my-connector \
+  --set-env-vars DB_HOST="<ALLOYDB_IP>",DB_PASS="SuperSecretPassword123"
+```

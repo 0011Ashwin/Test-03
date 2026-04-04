@@ -1,0 +1,95 @@
+# Cloud Run Deployment Commands for Travel Concierge
+
+Run these commands in your terminal to deploy the full suite of agents to Cloud Run.
+
+Make sure you've set your Project ID first:
+```bash
+export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project)
+export GOOGLE_GENAI_USE_VERTEXAI="true"
+```
+
+## 1. Deploy Logistics Agent
+```bash
+gcloud run deploy logistics \
+  --source agents/logistics/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+```
+
+## 2. Deploy Travel Researcher Agent
+```bash
+gcloud run deploy travel-researcher \
+  --source agents/travel_researcher/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+```
+
+## 3. Deploy Policy Auditor Agent
+```bash
+gcloud run deploy policy-auditor \
+  --source agents/policy_auditor/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+```
+
+## 4. Deploy Accountant Agent
+```bash
+gcloud run deploy accountant \
+  --source agents/accountant/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+```
+
+## 5. Capture Service URLs
+```bash
+LOGISTICS_URL=$(gcloud run services describe logistics --region us-central1 --format='value(status.url)')
+TRAVEL_RESEARCHER_URL=$(gcloud run services describe travel-researcher --region us-central1 --format='value(status.url)')
+POLICY_AUDITOR_URL=$(gcloud run services describe policy-auditor --region us-central1 --format='value(status.url)')
+ACCOUNTANT_URL=$(gcloud run services describe accountant --region us-central1 --format='value(status.url)')
+
+echo "Logistics: $LOGISTICS_URL"
+echo "Travel Researcher: $TRAVEL_RESEARCHER_URL"
+echo "Policy Auditor: $POLICY_AUDITOR_URL"
+echo "Accountant: $ACCOUNTANT_URL"
+```
+
+## 6. Deploy Orchestrator
+```bash
+gcloud run deploy orchestrator \
+  --source agents/orchestrator/ \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars LOGISTICS_AGENT_CARD_URL=$LOGISTICS_URL/a2a/agent/.well-known/agent-card.json \
+  --set-env-vars TRAVEL_RESEARCHER_AGENT_CARD_URL=$TRAVEL_RESEARCHER_URL/a2a/agent/.well-known/agent-card.json \
+  --set-env-vars POLICY_AUDITOR_AGENT_CARD_URL=$POLICY_AUDITOR_URL/a2a/agent/.well-known/agent-card.json \
+  --set-env-vars ACCOUNTANT_AGENT_CARD_URL=$ACCOUNTANT_URL/a2a/agent/.well-known/agent-card.json \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+
+ORCHESTRATOR_URL=$(gcloud run services describe orchestrator --region us-central1 --format='value(status.url)')
+echo "Orchestrator URL: $ORCHESTRATOR_URL"
+```
+
+## 7. Deploy Frontend
+```bash
+gcloud run deploy course-creator \
+    --source app \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --labels dev-tutorial=prod-ready-1 \
+    --set-env-vars AGENT_SERVER_URL=$ORCHESTRATOR_URL \
+    --set-env-vars GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
+```
