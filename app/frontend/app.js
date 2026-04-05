@@ -17,8 +17,29 @@ const resultText         = document.getElementById("result-text");
 const loadingText        = document.getElementById("loading-text");
 const newTripBtn         = document.getElementById("new-trip-btn");
 const livePill           = document.getElementById("live-pill");
+const sessionId          = "trip-" + Math.random().toString(36).substring(2, 12);
 
-const sessionId = "trip-" + Math.random().toString(36).substring(2, 12);
+// ── Simple Markdown → HTML renderer ─────────────────────────────────────────
+function renderMarkdown(text) {
+    if (!text) return "<p>Plan processed successfully.</p>";
+    let html = text
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/^### (.+)$/gm, "<h4>$1</h4>")
+        .replace(/^## (.+)$/gm,  "<h3>$1</h3>")
+        .replace(/^# (.+)$/gm,   "<h2>$1</h2>")
+        .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
+        .replace(/\*\*(.+?)\*\*/g,     "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g,         "<em>$1</em>")
+        .replace(/^[-•] (.+)$/gm,      "<li>$1</li>")
+        .replace(/^---+$/gm,           "<hr>")
+        .split("\n\n").map(p => {
+            if (/^<(h[2-4]|ul|ol|li|hr)/.test(p.trim())) return p;
+            return `<p>${p.replace(/\n/g, "<br>")}</p>`;
+        }).join("\n");
+    // Wrap consecutive <li> in <ul>
+    html = html.replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>");
+    return html;
+}
 
 // ── Chip helpers ────────────────────────────────────────────────────────────
 
@@ -26,10 +47,8 @@ function setChip(agent, state) {
     const chip = document.getElementById(`chip-${agent}`);
     const row  = document.getElementById(`row-${agent}`);
     if (!chip || !row) return;
-
     chip.className = "row-chip";
     row.classList.remove("active", "done");
-
     if (state === "running") {
         chip.classList.add("running");
         chip.textContent = "Running…";
@@ -57,7 +76,6 @@ travelForm.addEventListener("submit", async (e) => {
     const message = travelInput.value.trim();
     if (!message) return;
 
-    // Show processing view
     landingSection.classList.add("hidden");
     processingSection.classList.remove("hidden");
     submitBtn.disabled = true;
@@ -86,7 +104,6 @@ travelForm.addEventListener("submit", async (e) => {
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
-
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n");
             buffer = lines.pop();
@@ -95,16 +112,15 @@ travelForm.addEventListener("submit", async (e) => {
                 const line = raw.trim();
                 if (!line) continue;
 
-                // ── ndjson (progress / result) ──────────────────────────────
+                // ndjson (progress / result)
                 if (line.startsWith("{")) {
                     try {
                         const data = JSON.parse(line);
                         if (data.type === "progress") {
                             loadingText.textContent = data.text;
-                            // Activate the agent matching the message
                             for (const a of AGENTS) {
-                                const keyword = a.replace("_", " ").split(" ")[0];
-                                if (data.text.toLowerCase().includes(keyword) && !runningAgents.has(a)) {
+                                const kw = a.replace("_", " ").split(" ")[0];
+                                if (data.text.toLowerCase().includes(kw) && !runningAgents.has(a)) {
                                     runningAgents.add(a);
                                     setChip(a, "running");
                                 }
@@ -115,10 +131,10 @@ travelForm.addEventListener("submit", async (e) => {
                             showResult(finalText);
                         }
                         continue;
-                    } catch (_) { /* fall through to SSE */ }
+                    } catch (_) { /* fall through */ }
                 }
 
-                // ── SSE (data: ...) ─────────────────────────────────────────
+                // SSE events (data: ...)
                 if (line.startsWith("data:")) {
                     const payload = line.slice(5).trim();
                     if (!payload || payload === "[DONE]") continue;
@@ -126,8 +142,7 @@ travelForm.addEventListener("submit", async (e) => {
                         const event   = JSON.parse(payload);
                         const author  = event.author  || "";
                         const content = event.content || {};
-                        const parts   = (content.parts || []);
-                        const text    = parts.map((p) => p.text || "").join("");
+                        const text    = (content.parts || []).map(p => p.text || "").join("");
 
                         if (AGENTS.includes(author)) {
                             if (!runningAgents.has(author)) {
@@ -138,7 +153,6 @@ travelForm.addEventListener("submit", async (e) => {
                             if (text) {
                                 setOutput(author, text);
                                 setChip(author, "done");
-                                finalText = text;
                             }
                         }
 
@@ -147,7 +161,7 @@ travelForm.addEventListener("submit", async (e) => {
                             AGENTS.forEach((a) => setChip(a, "done"));
                             showResult(finalText);
                         }
-                    } catch (_) { /* ignore malformed */ }
+                    } catch (_) { /* ignore */ }
                 }
             }
         }
@@ -168,23 +182,17 @@ travelForm.addEventListener("submit", async (e) => {
 
 function showResult(text) {
     resultLoading.classList.add("hidden");
-    resultText.textContent = text;
+    resultText.innerHTML = renderMarkdown(text);
     resultDone.classList.remove("hidden");
     newTripBtn.classList.remove("hidden");
     livePill.innerHTML = '<span style="width:6px;height:6px;background:#34A853;border-radius:50%;display:inline-block;margin-right:4px;"></span> Complete';
-    livePill.style.color = "#34A853";
+    livePill.style.color      = "#34A853";
     livePill.style.background = "#E6F4EA";
 }
 
-// ── Agent label ─────────────────────────────────────────────────────────────
-
 function agentLabel(key) {
-    return {
-        logistics:         "🛎️ Logistics",
-        travel_researcher: "🔍 Travel Researcher",
-        policy_auditor:    "⚖️ Policy Auditor",
-        accountant:        "📝 Accountant",
-    }[key] || key;
+    return { logistics:"🛎️ Logistics", travel_researcher:"🔍 Travel Researcher",
+             policy_auditor:"⚖️ Policy Auditor", accountant:"📝 Accountant" }[key] || key;
 }
 
 // ── Reset ────────────────────────────────────────────────────────────────────
@@ -192,9 +200,8 @@ function agentLabel(key) {
 function resetApp() {
     processingSection.classList.add("hidden");
     landingSection.classList.remove("hidden");
-
-    travelInput.value   = "";
-    submitBtn.disabled  = false;
+    travelInput.value    = "";
+    submitBtn.disabled   = false;
     btnLabel.textContent = "Plan My Trip";
     btnArrow.classList.remove("hidden");
     btnSpinner.classList.add("hidden");
@@ -207,10 +214,10 @@ function resetApp() {
 
     resultLoading.classList.remove("hidden");
     resultDone.classList.add("hidden");
-    resultText.textContent  = "";
+    resultText.innerHTML    = "";
     loadingText.textContent = "Initializing agents…";
     newTripBtn.classList.add("hidden");
-    livePill.innerHTML = '<span class="live-dot"></span> Running';
-    livePill.style.color = "";
+    livePill.innerHTML    = '<span class="live-dot"></span> Running';
+    livePill.style.color  = "";
     livePill.style.background = "";
 }

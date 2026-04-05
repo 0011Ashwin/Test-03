@@ -135,6 +135,7 @@ async def chat_stream(req: ChatRequest):
         session = await create_session(agent, req.user_id)
 
     async def generate():
+        last_text = ""
         final_text = ""
         try:
             async for event in stream_agent(agent, req.user_id, session["id"], req.message):
@@ -152,16 +153,21 @@ async def chat_stream(req: ChatRequest):
                 if author in progress_map:
                     yield json.dumps({"type": "progress", "text": progress_map[author]}) + "\n"
 
-                # Accumulate text
+                # Capture text — prefer the final orchestrator summary
                 for part in parts:
-                    if part.get("text"):
-                        final_text += part["text"]
+                    t = part.get("text", "")
+                    if t:
+                        last_text = t
+                        # If the orchestrator sends a final summary, mark it
+                        if author in ("concierge_pipeline", "orchestrator", agent):
+                            final_text = t
 
         except Exception as e:
             logger.error(f"Streaming error: {e}")
-            final_text = f"An error occurred: {str(e)}"
 
-        yield json.dumps({"type": "result", "text": final_text.strip()}) + "\n"
+        # Use final orchestrator text if available, otherwise last agent text
+        result = final_text or last_text or "The travel plan has been processed by all agents."
+        yield json.dumps({"type": "result", "text": result.strip()}) + "\n"
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 

@@ -452,14 +452,20 @@ h1 {
 }
 
 .result-text {
-    font-size: 0.85rem;
+    font-size: 0.88rem;
     color: var(--text-secondary);
-    line-height: 1.75;
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 400px;
+    line-height: 1.8;
+    max-height: 460px;
     overflow-y: auto;
 }
+.result-text p    { margin-bottom: 10px; }
+.result-text h2   { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 14px 0 6px; }
+.result-text h3   { font-family: 'Google Sans', sans-serif; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 12px 0 5px; }
+.result-text h4   { font-size: 0.88rem; font-weight: 600; color: var(--text-primary); margin: 10px 0 4px; }
+.result-text strong { color: var(--text-primary); font-weight: 600; }
+.result-text ul   { padding-left: 18px; margin-bottom: 10px; }
+.result-text li   { margin-bottom: 4px; }
+.result-text hr   { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
 .site-footer {
