@@ -40,7 +40,8 @@ gcloud run deploy logistics \
   --allow-unauthenticated \
   --labels dev-tutorial=prod-ready-1 \
   --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
-  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true" \
+  --timeout 300
 LOGISTICS_URL=$(gcloud run services describe logistics --region $REGION --format='value(status.url)')
 
 gcloud run deploy travel-researcher \
@@ -96,4 +97,5 @@ gcloud run deploy ai-travel-concierge \
   --allow-unauthenticated \
   --labels dev-tutorial=prod-ready-1 \
   --set-env-vars AGENT_SERVER_URL=$ORCHESTRATOR_URL \
-  --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}"
+  --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
+  --timeout 300
