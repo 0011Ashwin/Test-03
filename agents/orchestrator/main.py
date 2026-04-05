@@ -78,10 +78,11 @@ async def get_session(app_name: str, user_id: str, session_id: str):
 
 async def call_agent(base_url: str, message: str, author_name: str) -> str:
     """Calls an ADK sub-agent and returns its final text response."""
-    session_id = str(uuid.uuid4())
     async with httpx.AsyncClient(timeout=120.0) as client:
-        # Create session
-        await client.post(f"{base_url}/apps/{APP_NAME}/users/orchestrator/sessions", json={})
+        # Create session — use the ID the server assigns
+        sess_resp = await client.post(f"{base_url}/apps/{APP_NAME}/users/orchestrator/sessions", json={})
+        sess_data = sess_resp.json() if sess_resp.status_code in (200, 201) else {}
+        session_id = sess_data.get("id") or str(uuid.uuid4())
 
         # Run agent
         payload = {
