@@ -360,6 +360,7 @@ h1 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
 }
 
@@ -466,6 +467,58 @@ h1 {
 .result-text ul   { padding-left: 18px; margin-bottom: 10px; }
 .result-text li   { margin-bottom: 4px; }
 .result-text hr   { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+/* ── Markdown table ─────────────────────────────────────────────────────── */
+.result-text .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin: 10px 0 14px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.result-text .md-table th {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.result-text .md-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #F0F0F0;
+    color: var(--text-secondary);
+    vertical-align: top;
+}
+.result-text .md-table tr:last-child td { border-bottom: none; }
+.result-text .md-table tr:nth-child(even) td { background: #FAFBFC; }
+
+/* ── Markdown blockquote ────────────────────────────────────────────────── */
+.result-text .md-blockquote {
+    border-left: 3px solid var(--google-blue);
+    background: #E8F0FE;
+    padding: 8px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 10px 0;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+}
+
+/* ── Code inline ────────────────────────────────────────────────────────── */
+.result-text code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+}
+
+/* ── Result panel max-height lifted for richer content ──────────────────── */
+.result-text { max-height: 600px; }
+
 
 /* ── Footer ─────────────────────────────────────────────────────────────────── */
 .site-footer {

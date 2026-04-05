@@ -89,7 +89,7 @@ gcloud run deploy orchestrator \
 ORCHESTRATOR_URL=$(gcloud run services describe orchestrator --region $REGION --format='value(status.url)')
 echo "Orchestrator URL: $ORCHESTRATOR_URL"
 
-gcloud run deploy course-creator \
+gcloud run deploy travel-concierge \
   --source app \
   --project $GOOGLE_CLOUD_PROJECT \
   --region $REGION \

@@ -19,27 +19,80 @@ const newTripBtn         = document.getElementById("new-trip-btn");
 const livePill           = document.getElementById("live-pill");
 const sessionId          = "trip-" + Math.random().toString(36).substring(2, 12);
 
-// ── Simple Markdown → HTML renderer ─────────────────────────────────────────
+// ── Markdown → HTML renderer (supports tables, blockquotes, lists) ──────────
 function renderMarkdown(text) {
     if (!text) return "<p>Plan processed successfully.</p>";
-    let html = text
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/^### (.+)$/gm, "<h4>$1</h4>")
-        .replace(/^## (.+)$/gm,  "<h3>$1</h3>")
-        .replace(/^# (.+)$/gm,   "<h2>$1</h2>")
-        .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-        .replace(/\*\*(.+?)\*\*/g,     "<strong>$1</strong>")
-        .replace(/\*(.+?)\*/g,         "<em>$1</em>")
-        .replace(/^[-•] (.+)$/gm,      "<li>$1</li>")
-        .replace(/^---+$/gm,           "<hr>")
-        .split("\n\n").map(p => {
-            if (/^<(h[2-4]|ul|ol|li|hr)/.test(p.trim())) return p;
-            return `<p>${p.replace(/\n/g, "<br>")}</p>`;
-        }).join("\n");
-    // Wrap consecutive <li> in <ul>
-    html = html.replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>");
+
+    // Split into lines for table detection
+    const lines = text.split("\n");
+    let html = "";
+    let i = 0;
+
+    while (i < lines.length) {
+        const line = lines[i];
+
+        // Detect markdown table (|col|col| pattern)
+        if (/^\|.+\|$/.test(line.trim()) && i + 1 < lines.length && /^\|[-| :]+\|$/.test(lines[i + 1].trim())) {
+            html += "<table class='md-table'>";
+            // Header row
+            const headers = line.trim().split("|").filter(c => c.trim() !== "");
+            html += "<thead><tr>" + headers.map(h => `<th>${processInline(h.trim())}</th>`).join("") + "</tr></thead>";
+            i += 2; // skip header + separator
+            html += "<tbody>";
+            while (i < lines.length && /^\|.+\|$/.test(lines[i].trim())) {
+                const cells = lines[i].trim().split("|").filter(c => c.trim() !== "");
+                html += "<tr>" + cells.map(c => `<td>${processInline(c.trim())}</td>`).join("") + "</tr>";
+                i++;
+            }
+            html += "</tbody></table>";
+            continue;
+        }
+
+        // Blockquote
+        if (/^> /.test(line)) {
+            html += `<blockquote class='md-blockquote'>${processInline(line.slice(2))}</blockquote>`;
+            i++; continue;
+        }
+
+        // HR
+        if (/^---+$/.test(line.trim())) { html += "<hr class='md-hr'>"; i++; continue; }
+
+        // Headings
+        if (/^### /.test(line)) { html += `<h4>${processInline(line.slice(4))}</h4>`; i++; continue; }
+        if (/^## /.test(line))  { html += `<h3>${processInline(line.slice(3))}</h3>`; i++; continue; }
+        if (/^# /.test(line))   { html += `<h2>${processInline(line.slice(2))}</h2>`; i++; continue; }
+
+        // List items
+        if (/^[-•*] /.test(line.trim())) {
+            html += "<ul>";
+            while (i < lines.length && /^[-•*] /.test(lines[i].trim())) {
+                html += `<li>${processInline(lines[i].trim().slice(2))}</li>`;
+                i++;
+            }
+            html += "</ul>";
+            continue;
+        }
+
+        // Paragraph
+        if (line.trim()) {
+            html += `<p>${processInline(line)}</p>`;
+        }
+
+        i++;
+    }
+
     return html;
 }
+
+function processInline(text) {
+    return text
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        .replace(/`(.+?)`/g, "<code>$1</code>");
+}
+
 
 // ── Chip helpers ────────────────────────────────────────────────────────────
 

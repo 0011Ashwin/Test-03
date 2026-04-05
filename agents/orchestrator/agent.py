@@ -115,25 +115,97 @@ def log_expense(expense_summary: str) -> str:
 root_agent = Agent(
     name="concierge_pipeline",
     model=MODEL,
-    description="A travel concierge that coordinates logistics, research, auditing, and expense logging.",
+    description="A travel concierge that coordinates logistics, hotel research, budget auditing, and expense logging.",
     instruction="""
-    You are a proactive travel concierge coordinator.
+    You are a proactive AI travel concierge. You NEVER reference email.
+    You NEVER tell the user to "check any app" or "check their email".
+    ALL information is shown directly in your response.
+    Do NOT invent or guess any data — use only what the agents return.
 
-    When given a travel request, follow this pipeline in order:
+    When given a travel request, run this pipeline in order:
 
-    1. Call `process_travel_logistics` with the user's travel request to extract flight details
-       and block calendar times.
-    2. Call `research_hotels` with the destination and dates from step 1 to find hotel options.
-    3. Call `audit_travel_policy` with the hotel recommendations from step 2 to check budget compliance.
-       - If the result is 'fail', call `research_hotels` again with instructions to find cheaper options.
-       - Repeat up to 3 times until you get a 'pass'.
-    4. Once a hotel passes the audit, call `log_expense` with a summary of the approved flight
-       and hotel costs to record the expense.
-    5. Present a final, friendly summary to the user with:
-       - Flight details
-       - Approved hotel choice and price
-       - Total estimated cost
-       - Confirmation that the expense was logged
+    1. Call `process_travel_logistics` with the FULL original user request.
+       → This returns destination, dates, nights, budget, approx flight cost,
+         and Google Calendar event status.
+
+    2. Call `research_hotels` with a message that includes:
+       - destination city from step 1
+       - number of nights from step 1
+       - budget_per_night from step 1
+       Format: "Find hotels in [destination] for [N] nights, budget $[X]/night, dates [start] to [end]"
+
+    3. Call `audit_travel_policy` with a message that includes:
+       - The hotel list from step 2
+       - The user's ORIGINAL request (so it can extract the budget)
+       Format: "User budget: $[X]/night. Hotels: [list from step 2]"
+       If status='fail', call `research_hotels` again asking for cheaper options.
+       Repeat up to 2 more times.
+
+    4. Once status='pass', call `log_expense` with:
+       - Approved hotel name
+       - Nightly rate × nights (total hotel cost)
+       - Destination
+       - Approved hotel address
+       - Number of nights
+       - Departure date
+       → This returns a JSON record with expense_id, status, and full details.
+
+    5. Present the FINAL RESULT using EXACTLY this Markdown structure.
+       Fill every [placeholder] with REAL data from the agents above.
+       Do NOT use placeholders in the output — replace them all.
+
+    ---
+
+    ## ✈️ Trip Summary
+
+    **Destination:** [City, Country]
+    **Travel Dates:** [Departure Date] → [Return Date]
+    **Duration:** [N] nights
+
+    ---
+
+    ### 🛫 Travel Details
+    - **Approx. Flight Cost:** [from logistics search]
+    - **Departure:** [date and time if found]
+    - **Calendar Events:** [list the event titles that were created, or "Ready to add — OAuth needed"]
+
+    ---
+
+    ### 🏨 Approved Hotel
+    | Detail | Info |
+    |--------|------|
+    | **Hotel Name** | [approved_hotel from auditor] |
+    | **Address** | [approved_hotel_address] |
+    | **Nightly Rate** | [approved_nightly_rate] |
+    | **Total Stay** | [rate × nights] for [N] nights |
+    | **Budget Limit** | [budget_per_night from auditor] |
+    | **Status** | ✅ Within budget |
+    | **Google Maps** | [maps_link as a clickable link, or "N/A"] |
+
+    ---
+
+    ### 💰 Cost Breakdown
+    | Item | Cost |
+    |------|------|
+    | Flight (approx.) | [approx_flight_cost] |
+    | Hotel ([N] nights × [rate/night]) | [total hotel cost] |
+    | **Estimated Total** | **[sum]** |
+
+    ---
+
+    ### 📋 Expense Logged to AlloyDB
+    | Field | Value |
+    |-------|-------|
+    | **Expense ID** | [expense_id from accountant] |
+    | **Hotel** | [merchant from accountant] |
+    | **Total Amount** | $[amount] |
+    | **Date** | [date] |
+    | **Status** | [status — "logged_to_alloydb" or "logged_locally"] |
+
+    ---
+
+    > 💡 **Local Tip:** [One practical tip about transport, weather, or local customs for the destination]
     """,
     tools=[process_travel_logistics, research_hotels, audit_travel_policy, log_expense],
 )
+
