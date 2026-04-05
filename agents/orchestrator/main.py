@@ -126,12 +126,12 @@ async def call_agent(base_url: str, message: str, label: str) -> str:
                     content = event.get("content") or {}
                     for part in (content.get("parts") or []):
                         t = part.get("text", "")
-                        if t and t.strip():
-                            texts.append(t.strip())
+                        if t:
+                            texts.append(t)
                 except json.JSONDecodeError:
                     pass
 
-            return "\n".join(texts) if texts else ""
+            return "".join(texts) if texts else ""
     except Exception as e:
         logger.error(f"Error calling {label}: {e}")
         return ""
@@ -184,23 +184,25 @@ Write the summary now:"""
         client = get_genai_client()
         response = await asyncio.to_thread(
             client.models.generate_content,
-            model="gemini-2.0-flash",
+            model="gemini-2.5-pro",
             contents=prompt,
         )
         return response.text
     except Exception as e:
         logger.error(f"Gemini synthesis error: {e}")
-        return f"""## ✅ Travel Plan Confirmed
+        return f"""## ✅ Travel Plan Summary Failed to Generate
+
+**Error Details:** `{str(e)}`
 
 **Your Request:** {user_request}
 
 All four AI agents have processed your travel request:
-- 🛎️ **Logistics Agent** — Processed flight details and calendar
-- 🔍 **Travel Researcher** — Found hotel options for your stay
-- ⚖️ **Policy Auditor** — Verified compliance with budget policy
-- 📝 **Accountant** — Logged approved expenses to AlloyDB
+- 🛎️ **Logistics Agent** — {logistics.splitlines()[0] if logistics else 'Processed flight details and calendar'}
+- 🔍 **Travel Researcher** — {researcher.splitlines()[0] if researcher else 'Found hotel options for your stay'}
+- ⚖️ **Policy Auditor** — {auditor.splitlines()[0] if auditor else 'Verified compliance with budget policy'}
+- 📝 **Accountant** — {accountant.splitlines()[0] if accountant else 'Logged approved expenses to AlloyDB'}
 
-Your trip is being coordinated. Please check your email for confirmation details."""
+Your trip has been successfully coordinated across all systems. Please review the agent logs on the left for specific details."""
 
 # ── Main /run_sse endpoint ────────────────────────────────────────────────────
 
@@ -217,6 +219,14 @@ async def run_sse(req: RunRequest):
         p.get("text", "") for p in req.newMessage.get("parts", [])
     )
 
+    # Extract secure calendar token
+    calendar_token = ""
+    token_marker = "[SYSTEM] The user's Google Calendar OAuth Token is: "
+    if token_marker in user_message:
+        parts = user_message.split(token_marker)
+        user_message = parts[0].strip()
+        calendar_token = parts[1].strip()
+
     async def generate():
         def ev(author: str, text: str) -> str:
             return "data: " + json.dumps({
@@ -228,7 +238,11 @@ async def run_sse(req: RunRequest):
 
         # ── Step 1: Logistics ────────────────────────────────────────────────
         yield ev("logistics", f"Processing your travel request…")
-        logistics_result = await call_agent(LOGISTICS_URL, user_message, "logistics")
+        logistics_msg = user_message
+        if calendar_token:
+            logistics_msg += f"\n\n[SYSTEM] Use this Google Calendar OAuth Token in your tool: {calendar_token}"
+
+        logistics_result = await call_agent(LOGISTICS_URL, logistics_msg, "logistics")
         outputs["logistics"] = logistics_result
         yield ev("logistics", logistics_result or "Flight details processed.")
 

@@ -113,7 +113,9 @@ accountant = Agent(
     2. Return the FULL JSON record that `log_expense_to_db` returns.
        The orchestrator needs the expense_id, amount, status, and address to show the user.
     """,
-    tools=[log_expense_to_db]
+    tools=[log_expense_to_db],
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
 )
 
 root_agent = accountant

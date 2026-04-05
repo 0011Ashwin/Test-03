@@ -8,11 +8,13 @@ MODEL = "gemini-2.5-pro"
 
 
 def google_calendar_create(title: str, start_datetime: str, end_datetime: str,
-                             location: str, description: str = "") -> str:
+                             location: str, description: str = "",
+                             user_oauth_token: str = "") -> str:
     """
     Creates a real Google Calendar event via the Calendar REST API.
 
-    The service requires GOOGLE_CALENDAR_TOKEN (a valid OAuth2 access token)
+    If user_oauth_token is provided, it uses the user's personal calendar via OAuth.
+    Otherwise, it falls back to GOOGLE_CALENDAR_TOKEN or Workload Identity.
     and GOOGLE_CALENDAR_ID (defaults to 'primary') set as env vars.
     On Cloud Run this token is obtained from the metadata server or Workload Identity.
 
@@ -25,8 +27,9 @@ def google_calendar_create(title: str, start_datetime: str, end_datetime: str,
     Returns:
         JSON string with the created event id, htmlLink, or an error message.
     """
-    token       = os.environ.get("GOOGLE_CALENDAR_TOKEN", "")
-    calendar_id = os.environ.get("GOOGLE_CALENDAR_ID", "primary")
+    # Prioritize user OAuth token if passed by the Orchestrator
+    token       = user_oauth_token or os.environ.get("GOOGLE_CALENDAR_TOKEN", "")
+    calendar_id = "primary"
 
     if not token:
         # Attempt to fetch token from GCE metadata (works on Cloud Run automatically)
@@ -108,6 +111,7 @@ logistics = Agent(
     3. Use `google_calendar_create` to create two calendar events:
        - "✈️ Departure – [Destination]" for the departure day
        - "🏨 Stay – [Destination] ([N] nights)" for the full stay period
+       **CRITICAL: If the prompt includes a "[SYSTEM] Use this Google Calendar OAuth Token" message, you MUST pass that token precisely into the `user_oauth_token` argument.**
     4. Return a structured JSON-style summary:
        {
          "destination": "...",
@@ -121,6 +125,8 @@ logistics = Agent(
        }
     """,
     tools=[google_search, google_calendar_create],
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
 )
 
 root_agent = logistics

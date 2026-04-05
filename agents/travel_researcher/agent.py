@@ -118,6 +118,8 @@ travel_researcher = Agent(
     If no hotel fits the budget, flag the cheapest option and note the difference.
     """,
     tools=[google_search, google_maps_search],
+    disallow_transfer_to_parent=True,
+    disallow_transfer_to_peers=True,
 )
 
 root_agent = travel_researcher

@@ -122,13 +122,33 @@ function setOutput(agent, text) {
     el.classList.remove("hidden");
 }
 
-// ── Submit ──────────────────────────────────────────────────────────────────
+let calendarAccessToken = null;
+const GOOGLE_CLIENT_ID = "690192679158-3o5ule16jcnj0e5nv3if47mh2rfb9sm8.apps.googleusercontent.com"; // UPDATED!
 
 travelForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const message = travelInput.value.trim();
     if (!message) return;
 
+    // Trigger OAuth if we don't have a token, requires user gesture
+    if (!calendarAccessToken && window.google) {
+        const tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: "https://www.googleapis.com/auth/calendar.events",
+            callback: (tokenResponse) => {
+                if (tokenResponse && tokenResponse.access_token) {
+                    calendarAccessToken = tokenResponse.access_token;
+                    startTrip(message);
+                }
+            },
+        });
+        tokenClient.requestAccessToken();
+    } else {
+        startTrip(message);
+    }
+});
+
+async function startTrip(message) {
     landingSection.classList.add("hidden");
     processingSection.classList.remove("hidden");
     submitBtn.disabled = true;
@@ -140,10 +160,15 @@ travelForm.addEventListener("submit", async (e) => {
     loadingText.textContent = "Connecting to AI agents…";
 
     try {
+        const payload = { message, session_id: sessionId };
+        if (calendarAccessToken) {
+            payload.calendar_token = calendarAccessToken;
+        }
+
         const resp = await fetch("/api/chat_stream", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, session_id: sessionId }),
+            body: JSON.stringify(payload),
         });
 
         if (!resp.ok) throw new Error(`Server error ${resp.status}: ${await resp.text()}`);
@@ -229,7 +254,7 @@ travelForm.addEventListener("submit", async (e) => {
         loadingText.textContent = "Something went wrong: " + err.message;
         newTripBtn.classList.remove("hidden");
     }
-});
+}
 
 // ── Show result ──────────────────────────────────────────────────────────────
 

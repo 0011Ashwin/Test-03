@@ -117,7 +117,7 @@ class ChatRequest(BaseModel):
     message: str
     user_id: str = "user"
     session_id: Optional[str] = None
-
+    calendar_token: Optional[str] = None
 
 @app.post("/api/chat_stream")
 async def chat_stream(req: ChatRequest):
@@ -134,11 +134,16 @@ async def chat_stream(req: ChatRequest):
     if session is None:
         session = await create_session(agent, req.user_id)
 
+    # Inject token as hidden context so ADK doesn't override it
+    msg = req.message
+    if req.calendar_token:
+        msg += f"\n\n[SYSTEM] The user's Google Calendar OAuth Token is: {req.calendar_token}"
+
     async def generate():
         last_text = ""
         final_text = ""
         try:
-            async for event in stream_agent(agent, req.user_id, session["id"], req.message):
+            async for event in stream_agent(agent, req.user_id, session["id"], msg):
                 author  = event.get("author", "")
                 content = event.get("content") or {}
                 parts   = content.get("parts", [])
