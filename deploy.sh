@@ -73,7 +73,18 @@ gcloud run deploy accountant \
   --set-env-vars DB_HOST="10.221.0.2",DB_PASS="SuperSecretPassword123" \
   --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
-ACCOUNTANT_URL=$(gcloud run services describe accountant --region $REGION --format='value(status.url)')
+ACCOUNT_URL=$(gcloud run services describe accountant --region $REGION --format='value(status.url)')
+ACCOUNTANT_URL=$ACCOUNT_URL
+
+gcloud run deploy email-sender \
+  --source agents/email_sender \
+  --project $GOOGLE_CLOUD_PROJECT \
+  --region $REGION \
+  --allow-unauthenticated \
+  --labels dev-tutorial=prod-ready-1 \
+  --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
+  --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
+EMAIL_SENDER_URL=$(gcloud run services describe email-sender --region $REGION --format='value(status.url)')
 
 gcloud run deploy orchestrator \
   --source agents/orchestrator \
@@ -85,6 +96,7 @@ gcloud run deploy orchestrator \
   --set-env-vars TRAVEL_RESEARCHER_AGENT_CARD_URL=$TRAVEL_RESEARCHER_URL/a2a/agent/.well-known/agent-card.json \
   --set-env-vars POLICY_AUDITOR_AGENT_CARD_URL=$POLICY_AUDITOR_URL/a2a/agent/.well-known/agent-card.json \
   --set-env-vars ACCOUNTANT_AGENT_CARD_URL=$ACCOUNTANT_URL/a2a/agent/.well-known/agent-card.json \
+  --set-env-vars EMAIL_SENDER_AGENT_CARD_URL=$EMAIL_SENDER_URL/a2a/agent/.well-known/agent-card.json \
   --set-env-vars GOOGLE_CLOUD_PROJECT="${GOOGLE_CLOUD_PROJECT}" \
   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI="true"
 ORCHESTRATOR_URL=$(gcloud run services describe orchestrator --region $REGION --format='value(status.url)')

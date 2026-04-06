@@ -1,6 +1,6 @@
 """
 Travel Concierge Orchestrator — main.py
-GenAI Academy · ACAP Edition · H2skill
+GenAI Academy · APAC Edition · Hack2skill
 
 Calls each specialist agent, then uses Gemini to synthesize
 a clean, readable final travel plan for the user.
@@ -35,6 +35,7 @@ LOGISTICS_URL   = _base("LOGISTICS_AGENT_CARD_URL",         "http://localhost:80
 RESEARCHER_URL  = _base("TRAVEL_RESEARCHER_AGENT_CARD_URL", "http://localhost:8002")
 AUDITOR_URL     = _base("POLICY_AUDITOR_AGENT_CARD_URL",    "http://localhost:8003")
 ACCOUNTANT_URL  = _base("ACCOUNTANT_AGENT_CARD_URL",        "http://localhost:8004")
+EMAIL_SENDER_URL = _base("EMAIL_SENDER_AGENT_CARD_URL",     "http://localhost:8005")
 
 GOOGLE_CLOUD_PROJECT = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 APP_NAME = "agent"
@@ -173,10 +174,10 @@ Now write a clean, professional, and friendly **Travel Plan Summary** for the us
 
 Guidelines:
 - Format with clear sections using markdown headings (## for sections)
-- Include: ✈️ Flight Details, 🏨 Hotel Recommendation, ✅ Budget Status, 📝 Expense Summary
+- Include: ✈️ Flight Details, 🏨 Hotel Recommendation, ✅ Budget Status, 📝 Expense Summary, 📧 Email Notification
 - If raw data is missing or unhelpful, infer a reasonable result based on the user's request
-- Be warm, concise, and helpful — like a real concierge
-- End with a friendly confirmation message
+- Format any URLs or addresses into proper markdown links, e.g. [Google Maps](url)
+- CRITICAL: The calendar events AND database expenses HAVE ALREADY BEEN BOOKED. Do NOT ask the user to reply, confirm, or take any further action. State clearly that the trip is finalized and booked.
 
 Write the summary now:"""
 
@@ -242,7 +243,11 @@ async def run_sse(req: RunRequest):
         if calendar_token:
             logistics_msg += f"\n\n[SYSTEM] Use this Google Calendar OAuth Token in your tool: {calendar_token}"
 
-        logistics_result = await call_agent(LOGISTICS_URL, logistics_msg, "logistics")
+        task = asyncio.create_task(call_agent(LOGISTICS_URL, logistics_msg, "logistics"))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        logistics_result = task.result()
         outputs["logistics"] = logistics_result
         yield ev("logistics", logistics_result or "Flight details processed.")
 
@@ -252,7 +257,11 @@ async def run_sse(req: RunRequest):
             f"Find hotels for this trip: {user_message}\n"
             f"Logistics context: {logistics_result}"
         ) if logistics_result else user_message
-        researcher_result = await call_agent(RESEARCHER_URL, researcher_msg, "travel_researcher")
+        task = asyncio.create_task(call_agent(RESEARCHER_URL, researcher_msg, "travel_researcher"))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        researcher_result = task.result()
         outputs["researcher"] = researcher_result
         yield ev("travel_researcher", researcher_result or "Hotel options researched.")
 
@@ -262,7 +271,11 @@ async def run_sse(req: RunRequest):
             f"Check budget compliance for: {user_message}\n"
             f"Hotel options: {researcher_result}"
         ) if researcher_result else f"Check budget compliance for: {user_message}"
-        auditor_result = await call_agent(AUDITOR_URL, auditor_msg, "policy_auditor")
+        task = asyncio.create_task(call_agent(AUDITOR_URL, auditor_msg, "policy_auditor"))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        auditor_result = task.result()
         outputs["auditor"] = auditor_result
         yield ev("policy_auditor", auditor_result or "Budget check completed.")
 
@@ -274,13 +287,35 @@ async def run_sse(req: RunRequest):
             f"Hotel: {researcher_result}\n"
             f"Audit: {auditor_result}"
         )
-        accountant_result = await call_agent(ACCOUNTANT_URL, accountant_msg, "accountant")
+        task = asyncio.create_task(call_agent(ACCOUNTANT_URL, accountant_msg, "accountant"))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        accountant_result = task.result()
         outputs["accountant"] = accountant_result
         yield ev("accountant", accountant_result or "Expenses logged.")
 
         # ── Step 5: Synthesize with Gemini ───────────────────────────────────
-        final_summary = await synthesize_travel_plan(user_message, outputs)
+        task = asyncio.create_task(synthesize_travel_plan(user_message, outputs))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        final_summary = task.result()
         yield ev("concierge_pipeline", final_summary)
+        
+        # ── Step 6: Email Notification ───────────────────────────────────────
+        yield ev("email_sender", "Sending your finalized itinerary to your Gmail inbox…")
+        email_msg = f"Please send this travel itinerary to the user:\n\n{final_summary}"
+        if calendar_token:
+            email_msg += f"\n\n[SYSTEM] Use this Google Calendar OAuth Token for Gmail API: {calendar_token}"
+        
+        task = asyncio.create_task(call_agent(EMAIL_SENDER_URL, email_msg, "email_sender"))
+        while not task.done():
+            yield ": ping\n\n"
+            await asyncio.wait([task], timeout=10.0)
+        email_result = task.result()
+        yield ev("email_sender", email_result or "Email dispatched.")
+
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")

@@ -1,6 +1,6 @@
 """
 Travel Concierge Frontend Server
-GenAI Academy · ACAP Edition · H2skill
+GenAI Academy · APAC Edition · Hack2skill
 """
 import json
 import logging
@@ -27,7 +27,7 @@ if not agent_server_url:
 
 # ── App ──────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="Travel Concierge — GenAI Academy ACAP")
+app = FastAPI(title="Travel Concierge — GenAI Academy APAC")
 
 app.add_middleware(
     CORSMiddleware,
@@ -154,6 +154,7 @@ async def chat_stream(req: ChatRequest):
                     "travel_researcher": "🔍 Travel Researcher is finding hotel options…",
                     "policy_auditor":    "⚖️ Policy Auditor is checking budget constraints…",
                     "accountant":        "📝 Accountant is logging expenses to AlloyDB…",
+                    "email_sender":      "📧 Email Sender is dispatching your itinerary...",
                 }
                 if author in progress_map:
                     yield json.dumps({"type": "progress", "text": progress_map[author]}) + "\n"

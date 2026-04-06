@@ -1,5 +1,5 @@
 /* Travel Concierge — app.js
-   Clean Google-style UI for GenAI Academy ACAP · H2skill */
+   Clean Google-style UI for GenAI Academy APAC · Hack2skill */
 
 const AGENTS = ["logistics", "travel_researcher", "policy_auditor", "accountant"];
 
@@ -90,6 +90,7 @@ function processInline(text) {
         .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        .replace(/\[(.*?)\]\((.*?)\)/g, "<a href='$2' target='_blank' style='color: var(--google-blue); font-weight: 500;'>$1</a>")
         .replace(/`(.+?)`/g, "<code>$1</code>");
 }
 
@@ -134,7 +135,7 @@ travelForm.addEventListener("submit", async (e) => {
     if (!calendarAccessToken && window.google) {
         const tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: GOOGLE_CLIENT_ID,
-            scope: "https://www.googleapis.com/auth/calendar.events",
+            scope: "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email",
             callback: (tokenResponse) => {
                 if (tokenResponse && tokenResponse.access_token) {
                     calendarAccessToken = tokenResponse.access_token;

@@ -1,4 +1,4 @@
-# Travel Concierge Multi-Agent System (ACAP Edition)
+# Travel Concierge Multi-Agent System (APAC Edition)
 
 A distributed multi-agent travel planning system built with Google's **Agent Development Kit (ADK)** and the **Agent-to-Agent (A2A)** protocol. This project demonstrates a production-grade orchestration of specialized microservice agents that collaborate to deliver a personalized, policy-compliant travel plan.
 
@@ -11,11 +11,13 @@ The system follows a sequential orchestration pattern where a central **Orchestr
     -   Receives the user request from the UI.
     -   Sequentially calls the sub-agents via A2A.
     -   Uses **Gemini 2.5 Pro** to synthesize raw agent outputs into a polished, human-readable travel plan.
+    -   Triggers the automated email dispatch.
 3.  **Specialized Agents**:
     -   🛎️ **Logistics Agent**: Processes flight details and manages calendar availability.
     -   🔍 **Travel Researcher**: Researches hotel options and itinerary details.
     -   ⚖️ **Policy Auditor**: Validates the proposed plan against corporate budget and travel policies.
     -   📝 **Accountant Agent**: Logs finalized and approved expenses into an **AlloyDB** database for record-keeping.
+    -   📧 **Email Sender**: Composes and dispatches the final travel plan directly to the user's Gmail inbox.
 
 ## 📂 Project Structure
 
@@ -26,7 +28,8 @@ prai-roadshow-lab-1/
 │   ├── logistics/           # Flight & Calendar integration
 │   ├── travel_researcher/   # Hotel & Itinerary research
 │   ├── policy_auditor/      # Budget & Policy compliance
-│   └── accountant/          # AlloyDB expense logging
+│   ├── accountant/          # AlloyDB expense logging
+│   └── email_sender/        # Automated Gmail dispatch
 ├── app/                     # Frontend Web Application
 │   └── frontend/            # Static UI assets (HTML/JS/CSS)
 ├── shared/                  # Shared utilities (ADK app, auth, utils)
