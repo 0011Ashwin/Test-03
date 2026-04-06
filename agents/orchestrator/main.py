@@ -93,7 +93,7 @@ async def call_agent(base_url: str, message: str, label: str) -> str:
     Returns any final text output, or an empty string if none.
     """
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             # Create session — use the server-assigned ID
             sess_resp = await client.post(
                 f"{base_url}/apps/{APP_NAME}/users/orchestrator/sessions", json={}
