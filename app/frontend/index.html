@@ -18,7 +18,12 @@
     <header class="topbar">
         <div class="topbar-left">
             <!-- Google-style coloured dots logo -->
-            <img src="logo.png" width="40" height="40" alt="AI Travel Concierge Logo" style="border-radius: 8px;">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9"  cy="9"  r="7" fill="#4285F4"/>
+                <circle cx="23" cy="9"  r="7" fill="#EA4335"/>
+                <circle cx="9"  cy="23" r="7" fill="#34A853"/>
+                <circle cx="23" cy="23" r="7" fill="#FBBC04"/>
+            </svg>
             <div class="topbar-brand">
                 <span class="brand-main">AI Travel Concierge</span>
                 <span class="brand-sub">GenAI Academy · ACAP Edition</span>
@@ -50,7 +55,12 @@
                 <!-- Input card -->
                 <div class="input-card">
                     <form id="travel-form" autocomplete="off">
-                        <label class="input-label" for="travel-input">Tell me about your trip</label>
+                        <label class="input-label" for="travel-input" style="display: flex; justify-content: space-between; align-items: center;">
+                            Tell me about your trip
+                            <span style="color: #4285f4; font-size: 13px; font-weight: 600; background: #e8f0fe; padding: 4px 10px; border-radius: 20px;">
+                                <span style="color: #4285f4">G</span><span style="color: #ea4335">o</span><span style="color: #fbbc05">o</span><span style="color: #4285f4">g</span><span style="color: #34a853">l</span><span style="color: #ea4335">e</span> Login Required
+                            </span>
+                        </label>
                         <div class="input-row">
                             <input
                                 type="text"

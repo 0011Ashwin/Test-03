@@ -43,7 +43,7 @@ _client: Optional[httpx.AsyncClient] = None
 async def get_client() -> httpx.AsyncClient:
     global _client
     if _client is None or _client.is_closed:
-        _client = httpx.AsyncClient(timeout=180.0)
+        _client = httpx.AsyncClient(timeout=350.0)
     return _client
 
 # ── ADK helpers ──────────────────────────────────────────────────────────────
