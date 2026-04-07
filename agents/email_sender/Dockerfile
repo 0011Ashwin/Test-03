@@ -1,33 +1,24 @@
 FROM python:3.12-slim
 
-# Install uv
+# Install uv for fast dependency management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install the project into /app
-COPY . /app
+# Set working directory and copy source
 WORKDIR /app
+COPY . /app
 
-# Allow statements and log messages to immediately appear in the logs
+# Optimize Python logs
 ENV PYTHONUNBUFFERED=1
-
-# Prepare virtual environment path
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install dependencies
+# Install absolute dependencies using uv
 RUN uv venv /opt/venv && \
     . /opt/venv/bin/activate && \
-    if [ -f pyproject.toml ]; then \
-        uv sync --active; \
-    elif [ -f requirements.txt ]; then \
-        uv pip install -U -r requirements.txt; \
-    else \
-        echo "Neither pyproject.toml nor requirements.txt found" && exit 1; \
-    fi
+    uv sync --active
 
-# Set host and port
-ENV HOST 0.0.0.0
-EXPOSE $PORT
+# Expose the standard Cloud Run port
+EXPOSE 8080
 
-# Run ADK API Server (Use the PORT provided by Cloud Run)
+# Start the ADK agent engine
 CMD python3 adk_app.py --host 0.0.0.0 --port ${PORT:-8080} --trace_to_cloud --a2a

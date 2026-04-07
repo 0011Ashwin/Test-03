@@ -5,7 +5,7 @@ import httpx
 from email.message import EmailMessage
 from google.adk.agents import Agent
 
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-2.5-pro"
 
 def get_user_email(token: str) -> str:
     """Fetches the user's email address using the OAuth token."""
