@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Travel Concierge — GenAI Academy APAC | Hack2skill</title>
-    <meta name="description" content="Multi-agent AI travel planner built on Google Cloud Run and Gemini. Part of GenAI Academy APAC edition hosted by Hack2skill.">
+    <title>AI Travel Concierge — GenAI Academy APAC | Apex Automations</title>
+    <meta name="description"
+        content="Multi-agent AI travel planner built on Google Cloud Run and Gemini. Part of GenAI Academy APAC edition hosted by Hack2skill.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=2">
     <!-- Google Identity Services for OAuth -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
 
     <!-- ── Top bar ── -->
@@ -19,10 +24,10 @@
         <div class="topbar-left">
             <!-- Google-style coloured dots logo -->
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9"  cy="9"  r="7" fill="#4285F4"/>
-                <circle cx="23" cy="9"  r="7" fill="#EA4335"/>
-                <circle cx="9"  cy="23" r="7" fill="#34A853"/>
-                <circle cx="23" cy="23" r="7" fill="#FBBC04"/>
+                <circle cx="9" cy="9" r="7" fill="#4285F4" />
+                <circle cx="23" cy="9" r="7" fill="#EA4335" />
+                <circle cx="9" cy="23" r="7" fill="#34A853" />
+                <circle cx="23" cy="23" r="7" fill="#FBBC04" />
             </svg>
             <div class="topbar-brand">
                 <span class="brand-main">AI Travel Concierge</span>
@@ -30,7 +35,7 @@
             </div>
         </div>
         <div class="topbar-right">
-            <span class="hosted-badge">Hosted by <strong>Hack2skill</strong></span>
+            <span class="hosted-badge">Hosted by <strong>Apex Automations</strong></span>
             <span class="powered-badge">Powered by <strong>Gemini</strong></span>
         </div>
     </header>
@@ -43,7 +48,8 @@
             <!-- Hero -->
             <div class="hero">
                 <div class="hero-label">
-                    <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" width="18" height="18" alt="Gemini" onerror="this.style.display='none'">
+                    <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
+                        width="18" height="18" alt="Gemini" onerror="this.style.display='none'">
                     Multi-Agent System · Google Cloud Run
                 </div>
                 <h1>Your AI-powered<br>Travel Concierge</h1>
@@ -55,31 +61,38 @@
                 <!-- Input card -->
                 <div class="input-card">
                     <form id="travel-form" autocomplete="off">
-                        <label class="input-label" for="travel-input" style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="input-label" for="travel-input"
+                            style="display: flex; justify-content: space-between; align-items: center;">
                             Tell me about your trip
-                            <span style="color: #4285f4; font-size: 13px; font-weight: 600; background: #e8f0fe; padding: 4px 10px; border-radius: 20px;">
-                                <span style="color: #4285f4">G</span><span style="color: #ea4335">o</span><span style="color: #fbbc05">o</span><span style="color: #4285f4">g</span><span style="color: #34a853">l</span><span style="color: #ea4335">e</span> Login Required
+                            <span
+                                style="color: #4285f4; font-size: 13px; font-weight: 600; background: #e8f0fe; padding: 4px 10px; border-radius: 20px;">
+                                <span style="color: #4285f4">G</span><span style="color: #ea4335">o</span><span
+                                    style="color: #fbbc05">o</span><span style="color: #4285f4">g</span><span
+                                    style="color: #34a853">l</span><span style="color: #ea4335">e</span> Login Required
                             </span>
                         </label>
                         <div class="input-row">
-                            <input
-                                type="text"
-                                id="travel-input"
-                                class="travel-input"
+                            <input type="text" id="travel-input" class="travel-input"
                                 placeholder="e.g. I have a flight to Bangalore on Monday for a 3-day conference…"
-                                required
-                            >
+                                required>
                             <button type="submit" id="submit-btn" class="btn-primary">
                                 <span id="btn-label">Plan My Trip</span>
-                                <svg id="btn-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
-                                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/>
+                                <svg id="btn-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                    fill="currentColor" width="18" height="18">
+                                    <path fill-rule="evenodd"
+                                        d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"
+                                        clip-rule="evenodd" />
                                 </svg>
-                                <svg id="btn-spinner" class="spinner hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                                <svg id="btn-spinner" class="spinner hidden" xmlns="http://www.w3.org/2000/svg"
+                                    width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <path
+                                        d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                                 </svg>
                             </button>
                         </div>
-                        <p class="input-hint">Try: "Flight to Mumbai next Tuesday, 2 nights, budget $150/night hotel"</p>
+                        <p class="input-hint">Try: "Flight to Mumbai next Tuesday, 2 nights, budget $150/night hotel"
+                        </p>
                     </form>
                 </div>
             </div>
@@ -94,7 +107,9 @@
                         <div class="pipe-desc">Parses flights & books calendar</div>
                     </div>
                     <div class="pipe-arrow">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round" />
+                        </svg>
                     </div>
                     <div class="pipe-agent">
                         <div class="pipe-icon" style="background:#FCE8E6; color:#EA4335;">🔍</div>
@@ -102,7 +117,9 @@
                         <div class="pipe-desc">Finds & ranks hotel options</div>
                     </div>
                     <div class="pipe-arrow">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round" />
+                        </svg>
                     </div>
                     <div class="pipe-agent">
                         <div class="pipe-icon" style="background:#FEF7E0; color:#F29900;">⚖️</div>
@@ -110,7 +127,9 @@
                         <div class="pipe-desc">Checks budget policy</div>
                     </div>
                     <div class="pipe-arrow">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12h14M13 6l6 6-6 6" stroke="#DADCE0" stroke-width="2" stroke-linecap="round" />
+                        </svg>
                     </div>
                     <div class="pipe-agent">
                         <div class="pipe-icon" style="background:#E6F4EA; color:#34A853;">📝</div>
@@ -192,7 +211,11 @@
                         </div>
                         <div class="result-done hidden" id="result-done">
                             <div class="result-done-header">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#34A853"/><path d="M7 12.5l3.5 3.5 6.5-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" fill="#34A853" />
+                                    <path d="M7 12.5l3.5 3.5 6.5-7" stroke="white" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
                                 <h3>Your Trip Plan</h3>
                             </div>
                             <div class="result-text" id="result-text"></div>
@@ -211,9 +234,11 @@
 
     <!-- Footer -->
     <footer class="site-footer">
-        <span>GenAI Academy · APAC Edition &nbsp;·&nbsp; Hosted by <strong>Hack2skill</strong> &nbsp;·&nbsp; Built on Google Cloud Run & Gemini</span>
+        <span>GenAI Academy · APAC Edition &nbsp;·&nbsp; Hosted by <strong>Hack2skill</strong> &nbsp;·&nbsp; Built on
+            Google Cloud Run & Gemini</span>
     </footer>
 
     <script src="app.js?v=2"></script>
 </body>
+
 </html>
