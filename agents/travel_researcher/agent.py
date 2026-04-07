@@ -13,10 +13,10 @@ def google_maps_search(query: str, location_bias: str = "") -> str:
     Returns real names, addresses, ratings, and price levels.
 
     Uses the Google Places API (New) Text Search endpoint.
-    Requires GOOGLE_MAPS_API_KEY env var.
+    Requires GOOGLE_MAPS_API_KEY in env var.
 
     Args:
-        query:         e.g. "4-star hotels in Bandra Mumbai under $150 per night"
+        query:         e.g. "4-star hotels in Bandra Mumbai under ₹1500 per night"
         location_bias: Optional city or lat,lng to bias results  e.g. "Mumbai, India"
     Returns:
         JSON string with list of places including name, address, rating, price_level.
@@ -27,7 +27,7 @@ def google_maps_search(query: str, location_bias: str = "") -> str:
         return json.dumps({
             "status": "no_api_key",
             "message": "GOOGLE_MAPS_API_KEY not set. Set this env var to enable real hotel lookup.",
-            "fallback": "Use google_search tool instead to find hotels."
+            "fallback": "Use `google_search` tool instead to find hotels."
         })
 
     try:
@@ -40,7 +40,7 @@ def google_maps_search(query: str, location_bias: str = "") -> str:
             # Use a simple circle bias around the city
             payload["locationBias"] = {
                 "circle": {
-                    "center": {"latitude": 0, "longitude": 0},  # LLM should fill via search
+                    "center": {"latitude": 0, "longitude": 0},  # LLM should fill via search 
                     "radius": 30000.0
                 }
             }

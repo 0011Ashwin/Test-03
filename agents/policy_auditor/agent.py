@@ -11,7 +11,7 @@ class AuditorFeedback(BaseModel):
         description="'pass' if at least one hotel is within the user's stated budget, else 'fail'."
     )
     budget_per_night: str = Field(
-        description="The budget limit extracted from the user's request, e.g. '$150'"
+        description="The budget limit extracted from the user's request, e.g. '₹1500'"
     )
     approved_hotel: Optional[str] = Field(
         default=None,
@@ -23,7 +23,7 @@ class AuditorFeedback(BaseModel):
     )
     approved_nightly_rate: Optional[str] = Field(
         default=None,
-        description="Nightly rate of the approved hotel, e.g. '$139'"
+        description="Nightly rate of the approved hotel, e.g. '₹1390'"
     )
     maps_link: Optional[str] = Field(
         default=None,
@@ -47,8 +47,8 @@ policy_auditor = Agent(
 
     Your job:
     1. Extract the maximum budget per night from the user's request
-       (e.g. if they said "budget $150/night", your limit is $150)
-       If no budget is stated, use a default of $200/night.
+       (e.g. if they said "budget ₹1500/night", your limit is ₹1500)
+       If no budget is stated, use a default of ₹2000/night.
     2. Evaluate each hotel against this budget.
     3. Return a structured AuditorFeedback:
        - status='pass': at least one hotel is AT or BELOW budget

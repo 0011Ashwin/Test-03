@@ -5,19 +5,17 @@ from google.adk.agents import Agent
 
 MODEL = "gemini-2.5-pro"
 
-
 def _get_base_url(card_url_env: str, default: str) -> str:
     """Extracts base service URL from the agent card URL environment variable."""
     card_url = os.environ.get(card_url_env, "")
     if card_url:
-        # Strip the a2a path suffix to get the base URL
-        # e.g. https://svc.run.app/a2a/agent/.well-known/agent-card.json -> https://svc.run.app
+        # Strip the A2A path suffix to get the base URL
+        # e.g. https://svc.run.app/a2a/agent/.well-known/agent-card.json --> https://svc.run.app
         for suffix in ["/a2a/agent/.well-known/agent-card.json", "/.well-known/agent-card.json"]:
             if card_url.endswith(suffix):
                 return card_url[: -len(suffix)]
         return card_url
     return default
-
 
 LOGISTICS_BASE = _get_base_url("LOGISTICS_AGENT_CARD_URL", "http://localhost:8001")
 TRAVEL_RESEARCHER_BASE = _get_base_url("TRAVEL_RESEARCHER_AGENT_CARD_URL", "http://localhost:8002")

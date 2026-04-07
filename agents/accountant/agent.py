@@ -6,7 +6,6 @@ from google.adk.agents import Agent
 
 MODEL = "gemini-2.5-pro"
 
-
 def log_expense_to_db(
     merchant: str,
     amount: float,
@@ -111,7 +110,9 @@ accountant = Agent(
        - notes:         any extra details
 
     2. After logging the expense, compose a formal Confirmation Email draft containing the user's flight and hotel details.
-    3. Return the FULL JSON record that `log_expense_to_db` returns AND append the full text of your drafted Confirmation Email. Conclude by explicitly stating that this email has been securely queued in the Database for automatic dispatch to the user's Gmail.
+    3. Return the FULL JSON record that `log_expense_to_db` returns AND append the full text of your drafted Confirmation Email. 
+    Conclude by explicitly stating that this email has been securely queued in the Database for automatic dispatch to the user's Gmail.
+    """,
     tools=[log_expense_to_db],
     disallow_transfer_to_parent=True,
     disallow_transfer_to_peers=True,

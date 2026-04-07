@@ -6,16 +6,15 @@ from google.adk.tools.google_search_tool import google_search
 
 MODEL = "gemini-2.5-pro"
 
-
 def google_calendar_create(title: str, start_datetime: str, end_datetime: str,
                              location: str, description: str = "",
                              user_oauth_token: str = "") -> str:
     """
-    Creates a real Google Calendar event via the Calendar REST API.
+    Creates a Real Google Calendar event via the Calendar REST API.
 
     If user_oauth_token is provided, it uses the user's personal calendar via OAuth.
     Otherwise, it falls back to GOOGLE_CALENDAR_TOKEN or Workload Identity.
-    and GOOGLE_CALENDAR_ID (defaults to 'primary') set as env vars.
+    and `GOOGLE_CALENDAR_ID` (defaults to 'primary') set as env vars.
     On Cloud Run this token is obtained from the metadata server or Workload Identity.
 
     Args:
@@ -118,8 +117,8 @@ logistics = Agent(
          "departure_date": "...",
          "return_date": "...",
          "nights": N,
-         "budget_per_night": "$...",
-         "approx_flight_cost": "$...",
+         "budget_per_night": "₹...",
+         "approx_flight_cost": "₹...",
          "calendar_events": ["...", "..."],
          "search_notes": "..."
        }
